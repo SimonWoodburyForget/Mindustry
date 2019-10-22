@@ -5,10 +5,10 @@ import io.anuke.arc.collection.*;
 import io.anuke.arc.input.*;
 import io.anuke.arc.scene.ui.layout.*;
 import io.anuke.arc.util.*;
-import io.anuke.mindustry.game.*;
 import io.anuke.mindustry.gen.*;
 import io.anuke.mindustry.type.*;
 import io.anuke.mindustry.ui.*;
+import io.anuke.mindustry.ui.Cicon;
 
 import static io.anuke.mindustry.Vars.*;
 
@@ -48,6 +48,7 @@ public class LoadoutDialog extends FloatingDialog{
 
         buttons.addImageTextButton("$settings.reset", Icon.refreshSmall, () -> {
             resetter.run();
+            reseed();
             updater.run();
             setup();
         }).size(210f, 64f);
@@ -55,10 +56,7 @@ public class LoadoutDialog extends FloatingDialog{
 
     public void show(int capacity, Array<ItemStack> stacks, Runnable reseter, Runnable updater, Runnable hider){
         this.originalStacks = stacks;
-        this.stacks = stacks.map(ItemStack::copy);
-        this.stacks.addAll(content.items().select(i -> i.type == ItemType.material &&
-            !stacks.contains(stack -> stack.item == i)).map(i -> new ItemStack(i, 0)));
-        this.stacks.sort(Structs.comparingInt(s -> s.item.id));
+        reseed();
         this.resetter = reseter;
         this.updater = updater;
         this.capacity = capacity;
@@ -108,6 +106,13 @@ public class LoadoutDialog extends FloatingDialog{
                 items.row();
             }
         }
+    }
+
+    private void reseed(){
+        this.stacks = originalStacks.map(ItemStack::copy);
+        this.stacks.addAll(content.items().select(i -> i.type == ItemType.material &&
+                !stacks.contains(stack -> stack.item == i)).map(i -> new ItemStack(i, 0)));
+        this.stacks.sort(Structs.comparingInt(s -> s.item.id));
     }
 
     private int step(int amount){

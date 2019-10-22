@@ -21,11 +21,11 @@ import io.anuke.mindustry.*;
 import io.anuke.mindustry.core.GameState.*;
 import io.anuke.mindustry.desktop.steam.*;
 import io.anuke.mindustry.game.EventType.*;
-import io.anuke.mindustry.game.Version;
-import io.anuke.mindustry.maps.Map;
+import io.anuke.mindustry.core.Version;
 import io.anuke.mindustry.mod.Mods.*;
 import io.anuke.mindustry.net.*;
 import io.anuke.mindustry.net.Net.*;
+import io.anuke.mindustry.type.*;
 import io.anuke.mindustry.ui.*;
 
 import java.io.*;
@@ -83,6 +83,14 @@ public class DesktopLauncher extends ClientLauncher{
         }
 
         if(useSteam){
+            //delete leftover dlls
+            FileHandle file = new FileHandle(".");
+            for(FileHandle other : file.parent().list()){
+                if(other.name().contains("steam") && (other.extension().equals("dll") || other.extension().equals("so") || other.extension().equals("dylib"))){
+                    other.delete();
+                }
+            }
+
             if(showConsole){
                 StringBuilder base = new StringBuilder();
                 Log.setLogger(new LogHandler(){
@@ -241,28 +249,18 @@ public class DesktopLauncher extends ClientLauncher{
     }
 
     @Override
-    public Array<FileHandle> getExternalMaps(){
-        return !steam ? super.getExternalMaps() : SVars.workshop.getMapFiles();
+    public Array<FileHandle> getWorkshopContent(Class<? extends Publishable> type){
+        return !steam ? super.getWorkshopContent(type) : SVars.workshop.getWorkshopFiles(type);
     }
 
     @Override
-    public Array<FileHandle> getExternalMods(){
-        return !steam ? super.getExternalMods() : SVars.workshop.getModFiles();
+    public void viewListing(Publishable pub){
+        SVars.workshop.viewListing(pub);
     }
 
     @Override
-    public void viewMapListing(Map map){
-        viewListing(map.file.parent().name());
-    }
-
-    @Override
-    public void viewListing(String mapid){
-        SVars.net.friends.activateGameOverlayToWebPage("steam://url/CommunityFilePage/" + mapid);
-    }
-
-    @Override
-    public void viewMapListingInfo(Map map){
-        SVars.workshop.viewMapListingInfo(map);
+    public void viewListingID(String id){
+        SVars.net.friends.activateGameOverlayToWebPage("steam://url/CommunityFilePage/" + id);
     }
 
     @Override
@@ -276,8 +274,8 @@ public class DesktopLauncher extends ClientLauncher{
     }
 
     @Override
-    public void publishMap(Map map){
-        SVars.workshop.publishMap(map);
+    public void publish(Publishable pub){
+        SVars.workshop.publish(pub);
     }
 
     @Override

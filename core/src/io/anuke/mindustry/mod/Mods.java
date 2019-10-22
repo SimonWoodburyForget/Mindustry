@@ -274,11 +274,27 @@ public class Mods implements Loadable{
 
     /** Creates all the content found in mod files. */
     public void loadContent(){
+        ContentType[] contentParserOrder;
+        contentParserOrder = new ContentType[]{
+            ContentType.item,
+            ContentType.unit, // UnitFactory depends on UnitType being parsed first
+            ContentType.block,
+            ContentType.mech,
+            ContentType.bullet,
+            ContentType.liquid,
+            ContentType.status,
+            ContentType.weather,
+            ContentType.effect,
+            ContentType.zone,
+            ContentType.loadout,
+            ContentType.typeid
+        };
+
         for(LoadedMod mod : loaded){
             safeRun(mod, () -> {
                 if(mod.root.child("content").exists()){
                     FileHandle contentRoot = mod.root.child("content");
-                    for(ContentType type : ContentType.all){
+                    for(ContentType type : contentParserOrder){
                         FileHandle folder = contentRoot.child(type.name().toLowerCase() + "s");
                         if(folder.exists()){
                             for(FileHandle file : folder.list()){

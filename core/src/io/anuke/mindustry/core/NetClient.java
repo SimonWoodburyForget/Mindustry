@@ -15,6 +15,7 @@ import io.anuke.mindustry.entities.*;
 import io.anuke.mindustry.entities.traits.BuilderTrait.*;
 import io.anuke.mindustry.entities.traits.*;
 import io.anuke.mindustry.entities.type.*;
+import io.anuke.mindustry.game.*;
 import io.anuke.mindustry.game.EventType.*;
 import io.anuke.mindustry.gen.*;
 import io.anuke.mindustry.net.Administration.*;
@@ -256,6 +257,11 @@ public class NetClient implements ApplicationListener{
     }
 
     @Remote(variants = Variant.both)
+    public static void onSetRules(Rules rules){
+        state.rules = rules;
+    }
+
+    @Remote(variants = Variant.both)
     public static void onWorldDataBegin(){
         entities.clear();
         netClient.removed.clear();
@@ -466,7 +472,7 @@ public class NetClient implements ApplicationListener{
             player.pointerX, player.pointerY, player.rotation, player.baseRotation,
             player.velocity().x, player.velocity().y,
             player.getMineTile(),
-            player.isBoosting, player.isShooting, ui.chatfrag.chatOpen(),
+            player.isBoosting, player.isShooting, ui.chatfrag.chatOpen(), player.isBuilding,
             requests,
             Core.camera.position.x, Core.camera.position.y,
             Core.camera.width * viewScale, Core.camera.height * viewScale);

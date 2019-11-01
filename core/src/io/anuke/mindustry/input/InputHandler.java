@@ -3,7 +3,7 @@ package io.anuke.mindustry.input;
 import io.anuke.annotations.Annotations.*;
 import io.anuke.arc.*;
 import io.anuke.arc.collection.*;
-import io.anuke.arc.function.*;
+import io.anuke.arc.func.*;
 import io.anuke.arc.graphics.*;
 import io.anuke.arc.graphics.g2d.*;
 import io.anuke.arc.input.*;
@@ -154,9 +154,9 @@ public abstract class InputHandler implements InputProcessor, GestureListener{
 
     public Eachable<BuildRequest> allRequests(){
         return cons -> {
-            for(BuildRequest request : player.buildQueue()) cons.accept(request);
-            for(BuildRequest request : selectRequests) cons.accept(request);
-            for(BuildRequest request : lineRequests) cons.accept(request);
+            for(BuildRequest request : player.buildQueue()) cons.get(request);
+            for(BuildRequest request : selectRequests) cons.get(request);
+            for(BuildRequest request : lineRequests) cons.get(request);
         };
     }
 
@@ -233,8 +233,28 @@ public abstract class InputHandler implements InputProcessor, GestureListener{
         selectRequests.addAll(schematics.toRequests(schem, world.toTile(player.x), world.toTile(player.y)));
     }
 
+    protected void showSchematicSave(){
+        if(lastSchematic == null) return;
+
+        ui.showTextInput("$schematic.add", "$name", "", text -> {
+            Schematic replacement = schematics.all().find(s -> s.name().equals(text));
+            if(replacement != null){
+                ui.showConfirm("$confirm", "$schematic.replace", () -> {
+                    schematics.overwrite(replacement, lastSchematic);
+                    ui.showInfoFade("$schematic.saved");
+                    ui.schematics.showInfo(replacement);
+                });
+            }else{
+                lastSchematic.tags.put("name", text);
+                schematics.add(lastSchematic);
+                ui.showInfoFade("$schematic.saved");
+                ui.schematics.showInfo(lastSchematic);
+            }
+        });
+    }
+
     public void rotateRequests(Array<BuildRequest> requests, int direction){
-        int ox = rawTileX(), oy = rawTileY();
+        int ox = schemOriginX(), oy = schemOriginY();
 
         requests.each(req -> {
             //rotate config position
@@ -269,7 +289,7 @@ public abstract class InputHandler implements InputProcessor, GestureListener{
     }
 
     public void flipRequests(Array<BuildRequest> requests, boolean x){
-        int origin = (x ? rawTileX() : rawTileY()) * tilesize;
+        int origin = (x ? schemOriginX() : schemOriginY()) * tilesize;
 
         requests.each(req -> {
             float value = -((x ? req.x : req.y) * tilesize - origin + req.block.offset()) + origin;
@@ -299,6 +319,14 @@ public abstract class InputHandler implements InputProcessor, GestureListener{
         });
     }
 
+    protected int schemOriginX(){
+        return rawTileX();
+    }
+
+    protected int schemOriginY(){
+        return rawTileY();
+    }
+
     /** Returns the selection request that overlaps this position, or null. */
     protected BuildRequest getRequest(int x, int y){
         return getRequest(x, y, 1, null);
@@ -311,7 +339,7 @@ public abstract class InputHandler implements InputProcessor, GestureListener{
         r2.setCenter(x * tilesize + offset, y * tilesize + offset);
         resultreq = null;
 
-        Predicate<BuildRequest> test = req -> {
+        Boolf<BuildRequest> test = req -> {
             if(req == skip) return false;
             Tile other = req.tile();
 
@@ -329,11 +357,11 @@ public abstract class InputHandler implements InputProcessor, GestureListener{
         };
 
         for(BuildRequest req : player.buildQueue()){
-            if(test.test(req)) return req;
+            if(test.get(req)) return req;
         }
 
         for(BuildRequest req : selectRequests){
-            if(test.test(req)) return req;
+            if(test.get(req)) return req;
         }
 
         return null;
@@ -768,7 +796,7 @@ public abstract class InputHandler implements InputProcessor, GestureListener{
         Core.atlas.find("place-arrow").getHeight() * Draw.scl, rotation * 90 - 90);
     }
 
-    void iterateLine(int startX, int startY, int endX, int endY, Consumer<PlaceLine> cons){
+    void iterateLine(int startX, int startY, int endX, int endY, Cons<PlaceLine> cons){
         Array<Point2> points;
         boolean diagonal = Core.input.keyDown(Binding.diagonal_placement);
         if(Core.settings.getBool("swapdiagonal")){
@@ -805,7 +833,7 @@ public abstract class InputHandler implements InputProcessor, GestureListener{
                 line.rotation = rotation;
             }
             line.last = next == null;
-            cons.accept(line);
+            cons.get(line);
 
             Tmp.r3.setSize(block.size * tilesize).setCenter(point.x * tilesize + block.offset(), point.y * tilesize + block.offset());
         }

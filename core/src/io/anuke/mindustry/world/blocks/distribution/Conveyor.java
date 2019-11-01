@@ -2,7 +2,6 @@ package io.anuke.mindustry.world.blocks.distribution;
 
 import io.anuke.arc.*;
 import io.anuke.arc.collection.*;
-import io.anuke.arc.function.*;
 import io.anuke.arc.graphics.g2d.*;
 import io.anuke.arc.math.*;
 import io.anuke.arc.math.geom.*;
@@ -29,9 +28,6 @@ public class Conveyor extends Block implements Autotiler{
     private static ItemPos pos2 = new ItemPos();
     private final Vector2 tr1 = new Vector2();
     private final Vector2 tr2 = new Vector2();
-    private final int[] blendresult = new int[3];
-    private final BuildRequest[] directionals = new BuildRequest[4];
-
     private TextureRegion[][] regions = new TextureRegion[7][4];
 
     protected float speed = 0f;
@@ -59,7 +55,7 @@ public class Conveyor extends Block implements Autotiler{
     @Override
     public void setStats(){
         super.setStats();
-        stats.add(BlockStat.itemsMoved, speed * 60 * (1f / itemSpace), StatUnit.itemsSecond);
+        stats.add(BlockStat.itemsMoved, speed * 60 / itemSpace, StatUnit.itemsSecond);
     }
 
     @Override

@@ -9,7 +9,7 @@ import io.anuke.mindustry.world.*;
 
 import static io.anuke.mindustry.Vars.tilesize;
 
-/**An overlay ore for a specific item type.*/
+/**An overlayfloor for a specific item type.*/
 public class OreBlock extends OverlayFloor{
 
     public OreBlock(Item ore){

@@ -4,7 +4,7 @@ import io.anuke.arc.graphics.g2d.Draw;
 import io.anuke.arc.math.Mathf;
 import io.anuke.mindustry.world.Tile;
 
-/**A type of floor that is overlaid on top of over floors.*/
+/**A type of floor that is overlaid on top of other floors.*/
 public class OverlayFloor extends Floor{
 
     public OverlayFloor(String name){

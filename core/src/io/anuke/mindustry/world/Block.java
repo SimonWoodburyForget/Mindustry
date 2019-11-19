@@ -89,6 +89,8 @@ public class Block extends BlockStorage{
     public boolean configurable;
     /** Whether this block consumes touchDown events when tapped. */
     public boolean consumesTap;
+    /** Whether to draw the glow of the liquid for this block, if it has one. */
+    public boolean drawLiquidLight = true;
     /** Whether the config is positional and needs to be shifted. */
     public boolean posConfig;
     /** Whether this block uses conveyor-type placement mode.*/
@@ -137,6 +139,7 @@ public class Block extends BlockStorage{
 
     protected TextureRegion[] cacheRegions = {};
     protected Array<String> cacheRegionStrings = new Array<>();
+    protected Prov<TileEntity> entityType = TileEntity::new;
 
     protected Array<Tile> tempTiles = new Array<>();
     protected TextureRegion[] generatedIcons;
@@ -290,6 +293,23 @@ public class Block extends BlockStorage{
 
     public void draw(Tile tile){
         Draw.rect(region, tile.drawx(), tile.drawy(), rotate ? tile.rotation() * 90 : 0);
+    }
+
+    public void drawLight(Tile tile){
+        if(hasLiquids && drawLiquidLight && tile.entity.liquids.current().lightColor.a > 0.001f){
+            drawLiquidLight(tile, tile.entity.liquids.current(), tile.entity.liquids.smoothAmount());
+        }
+    }
+
+    public void drawLiquidLight(Tile tile, Liquid liquid, float amount){
+        if(amount > 0.01f){
+            Color color = liquid.lightColor;
+            float fract = 1f;
+            float opacity = color.a * fract;
+            if(opacity > 0.001f){
+                renderer.lights.add(tile.drawx(), tile.drawy(), size * 30f * fract, color, opacity);
+            }
+        }
     }
 
     public void drawTeam(Tile tile){
@@ -606,7 +626,7 @@ public class Block extends BlockStorage{
 
         if(hasLiquids){
 
-            tile.entity.liquids.forEach((liquid, amount) -> {
+            tile.entity.liquids.each((liquid, amount) -> {
                 float splash = Mathf.clamp(amount / 4f, 0f, 10f);
 
                 for(int i = 0; i < Mathf.clamp(amount / 5, 0, 30); i++){
@@ -716,10 +736,12 @@ public class Block extends BlockStorage{
         Color color = content instanceof Item ? ((Item)content).color : content instanceof Liquid ? ((Liquid)content).color : null;
         if(color == null) return;
 
+        float prev = Draw.scl;
+
         Draw.color(color);
         Draw.scl *= req.animScale;
         Draw.rect(region, req.drawx(), req.drawy());
-        Draw.scl /= req.animScale;
+        Draw.scl = prev;
         Draw.color();
     }
 
@@ -835,8 +857,8 @@ public class Block extends BlockStorage{
         return destructible || update;
     }
 
-    public TileEntity newEntity(){
-        return new TileEntity();
+    public final TileEntity newEntity(){
+        return entityType.get();
     }
 
     /** Offset for placing and drawing multiblocks. */

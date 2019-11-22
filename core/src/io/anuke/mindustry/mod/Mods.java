@@ -206,6 +206,7 @@ public class Mods implements Loadable{
         }
 
         resolveDependencies();
+
         //sort mods to make sure servers handle them properly.
         loaded.sort(Structs.comparing(m -> m.name));
 
@@ -213,6 +214,10 @@ public class Mods implements Loadable{
     }
 
     private void resolveDependencies(){
+        Array<LoadedMod> incompatible = loaded.select(m -> !m.isSupported());
+        loaded.removeAll(incompatible);
+        disabled.addAll(incompatible);
+
         for(LoadedMod mod : Array.<LoadedMod>withArrays(loaded, disabled)){
             updateDependencies(mod);
         }
@@ -484,7 +489,7 @@ public class Mods implements Loadable{
 
         FileHandle metaf = zip.child("mod.json").exists() ? zip.child("mod.json") : zip.child("mod.js").exists() ? zip.child("mod.js") : zip.child("plugin.json");
         if(!metaf.exists()){
-            Log.warn("Mod {0} doesn't have a 'mod.json'/'plugin.json' file, skipping.", sourceFile);
+            Log.warn("Mod {0} doesn't have a 'mod.json'/'plugin.json'/'mod.js' file, skipping.", sourceFile);
             throw new IllegalArgumentException("No mod.json found.");
         }
 
@@ -572,6 +577,18 @@ public class Mods implements Loadable{
             return !missingDependencies.isEmpty();
         }
 
+        /** @return whether this mod is supported by the game verison */
+        public boolean isSupported(){
+            if(Version.build <= 0 || meta.minGameVersion == null) return true;
+            if(meta.minGameVersion.contains(".")){
+                String[] split = meta.minGameVersion.split("\\.");
+                if(split.length == 2){
+                    return Version.build >= Strings.parseInt(split[0], 0) && Version.revision >= Strings.parseInt(split[1], 0);
+                }
+            }
+            return Version.build >= Strings.parseInt(meta.minGameVersion, 0);
+        }
+
         @Override
         public String getSteamID(){
             return Core.settings.getString(name + "-steamid", null);
@@ -641,7 +658,7 @@ public class Mods implements Loadable{
 
     /** Plugin metadata information.*/
     public static class ModMeta{
-        public String name, author, description, version, main;
+        public String name, author, description, version, main, minGameVersion;
         public Array<String> dependencies = Array.with();
         /** Hidden mods are only server-side or client-side, and do not support adding new content. */
         public boolean hidden;

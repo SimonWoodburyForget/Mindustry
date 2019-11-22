@@ -173,7 +173,7 @@ public class Mods implements Loadable{
     /** Loads all mods from the folder, but does not call any methods on them.*/
     public void load(){
         for(FileHandle file : modDirectory.list()){
-            if(!file.extension().equals("jar") && !file.extension().equals("zip") && !(file.isDirectory() && (file.child("mod.json").exists() || file.child("mod.js").exists()))) continue;
+            if(!file.extension().equals("jar") && !file.extension().equals("zip") && !(file.isDirectory() && (file.child("mod.json").exists() || file.child("mod.hjson").exists()))) continue;
 
             Log.debug("[Mods] Loading mod {0}", file);
             try{
@@ -487,22 +487,13 @@ public class Mods implements Loadable{
             zip = zip.list()[0];
         }
 
-        FileHandle metaf = zip.child("mod.json").exists() ? zip.child("mod.json") : zip.child("mod.js").exists() ? zip.child("mod.js") : zip.child("plugin.json");
+        FileHandle metaf = zip.child("mod.json").exists() ? zip.child("mod.json") : zip.child("mod.hjson").exists() ? zip.child("mod.hjson") : zip.child("plugin.json");
         if(!metaf.exists()){
             Log.warn("Mod {0} doesn't have a 'mod.json'/'plugin.json'/'mod.js' file, skipping.", sourceFile);
             throw new IllegalArgumentException("No mod.json found.");
         }
 
-        //try to read as hjson if possible
-        String readString = metaf.readString();
-        try{
-            readString = Jval.read(readString).toString(Jformat.plain);
-        }catch(Throwable e){
-            e.printStackTrace();
-            readString = metaf.readString();
-        }
-
-        ModMeta meta = json.fromJson(ModMeta.class, readString);
+        ModMeta meta = json.fromJson(ModMeta.class, Jval.read(metaf.readString()).toString(Jformat.plain));
         String camelized = meta.name.replace(" ", "");
         String mainClass = meta.main == null ? camelized.toLowerCase() + "." + camelized + "Mod" : meta.main;
         String baseName = meta.name.toLowerCase().replace(" ", "-");
